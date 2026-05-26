@@ -100,4 +100,5 @@ jobs:
             --body "Automated version bump from \`${{ steps.compare.outputs.current }}\` to \`${VERSION}\`." \
             --base main \
             --head "$BRANCH" \
-            --label autobump
+            --label autobump \
+            --reviewer h3ct0rjs
