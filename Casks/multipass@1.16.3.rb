@@ -1,4 +1,4 @@
-cask "multipass" do
+cask "multipass@1.16.3" do
   version "1.16.3"
   sha256 "7d6eab39614139884cfb5a4aeb68f9b25334356c142d5d4b1f74acdd76082c18"
 
@@ -6,14 +6,6 @@ cask "multipass" do
   name "Multipass"
   desc "Orchestrates virtual Ubuntu instances"
   homepage "https://github.com/canonical/multipass/"
-
-  # Tracks all releases (stable + RC) via the releases list API, not /latest
-  livecheck do
-    url "https://api.github.com/repos/canonical/multipass/releases"
-    strategy :json do |json|
-      json.first["tag_name"]&.delete_prefix("v")
-    end
-  end
 
   depends_on macos: :ventura
 
