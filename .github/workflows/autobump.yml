@@ -20,7 +20,19 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          RELEASE=$(gh api repos/canonical/multipass/releases --jq '.[0]')
+          # /releases/latest = newest stable; /releases[0] = newest overall (incl. pre-releases)
+          STABLE=$(gh api repos/canonical/multipass/releases/latest)
+          PRERELEASE=$(gh api repos/canonical/multipass/releases --jq '.[0]')
+
+          STABLE_DATE=$(echo "$STABLE" | jq -r '.published_at')
+          PRERELEASE_DATE=$(echo "$PRERELEASE" | jq -r '.published_at')
+
+          if [[ "$PRERELEASE_DATE" > "$STABLE_DATE" ]]; then
+            RELEASE="$PRERELEASE"
+          else
+            RELEASE="$STABLE"
+          fi
+
           VERSION=$(echo "$RELEASE" | jq -r '.tag_name' | sed 's/^v//')
           ASSET_URL=$(echo "$RELEASE" | jq -r \
             '.assets[] | select(.name | test("mac-Darwin\\.pkg$")) | .browser_download_url')
