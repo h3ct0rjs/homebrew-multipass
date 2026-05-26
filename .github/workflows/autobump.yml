@@ -76,57 +76,9 @@ jobs:
         if: steps.compare.outputs.skip == 'false'
         run: |
           VERSION="${{ steps.release.outputs.version }}"
-
-          # Update the rolling "latest" cask
           sed -i '' "s/^  version \".*\"/  version \"$VERSION\"/" Casks/multipass.rb
           sed -i '' "s/^  sha256 \".*\"/  sha256 \"$sha256\"/" Casks/multipass.rb
-
-          # Mint a pinned versioned cask if it does not exist yet
-          VERSIONED="Casks/multipass@${VERSION}.rb"
-          if [ ! -f "$VERSIONED" ]; then
-            cat > "$VERSIONED" << TEMPLATE
-cask "multipass@${VERSION}" do
-  version "${VERSION}"
-  sha256 "${sha256}"
-
-  url "https://github.com/canonical/multipass/releases/download/v#{version}/multipass-#{version}+mac-Darwin.pkg"
-  name "Multipass"
-  desc "Orchestrates virtual Ubuntu instances"
-  homepage "https://github.com/canonical/multipass/"
-
-  depends_on macos: :ventura
-
-  pkg "multipass-#{version}+mac-Darwin.pkg"
-
-  on_arm do
-    postflight do
-      File.symlink("/Library/Application Support/com.canonical.multipass/Resources/completions/bash/multipass",
-                   "#{HOMEBREW_PREFIX}/etc/bash_completion.d/multipass")
-    end
-  end
-
-  uninstall launchctl: "com.canonical.multipassd",
-            pkgutil:   "com.canonical.multipass.*",
-            delete:    [
-              "#{HOMEBREW_PREFIX}/etc/bash_completion.d/multipass",
-              "/Applications/Multipass.app",
-              "/Library/Application Support/com.canonical.multipass",
-              "/Library/Logs/Multipass",
-              "/usr/local/bin/multipass",
-              "/usr/local/etc/bash_completion.d/multipass",
-            ]
-
-  zap trash: [
-    "~/Library/Application Support/com.canonical.multipassGui",
-    "~/Library/Application Support/multipass",
-    "~/Library/Application Support/multipass-gui",
-    "~/Library/LaunchAgents/com.canonical.multipass.gui.autostart.plist",
-    "~/Library/Preferences/multipass",
-    "~/Library/Saved Application State/com.canonical.multipassGui.savedState",
-  ]
-end
-TEMPLATE
-          fi
+          bash scripts/make-versioned-cask.sh "$VERSION" "$sha256"
 
       - name: Open PR
         if: steps.compare.outputs.skip == 'false'
