@@ -93,9 +93,10 @@ jobs:
           git add Casks/multipass.rb "Casks/multipass@${VERSION}.rb"
           git commit -m "multipass: update to ${VERSION} [autobump]"
           git push origin "$BRANCH"
+          gh label create autobump --color "0E8A16" --description "Automated version bump" 2>/dev/null || true
           gh pr create \
             --title "multipass ${VERSION}" \
             --body "Automated version bump from \`${{ steps.compare.outputs.current }}\` to \`${VERSION}\`." \
             --base main \
             --head "$BRANCH" \
-            --label autobump 2>/dev/null || true
+            --label autobump
