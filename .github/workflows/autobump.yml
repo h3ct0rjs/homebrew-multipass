@@ -20,12 +20,24 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # /releases/latest = newest stable; /releases[0] = newest overall (incl. pre-releases)
-          STABLE=$(gh api repos/canonical/multipass/releases/latest)
-          PRERELEASE=$(gh api repos/canonical/multipass/releases --jq '.[0]')
+          # Fetch all recent releases once; filter to those that have a macOS .pkg asset.
+          # This skips releases that were tagged but whose assets haven't been uploaded yet.
+          ALL=$(gh api repos/canonical/multipass/releases)
 
-          STABLE_DATE=$(echo "$STABLE" | jq -r '.published_at')
-          PRERELEASE_DATE=$(echo "$PRERELEASE" | jq -r '.published_at')
+          STABLE=$(echo "$ALL" | jq '[.[] | select(.prerelease == false)
+            | select(any(.assets[]; .name | test("mac-Darwin\\.pkg$")))] | .[0]')
+          PRERELEASE=$(echo "$ALL" | jq '[.[]
+            | select(any(.assets[]; .name | test("mac-Darwin\\.pkg$")))] | .[0]')
+
+          STABLE_DATE=$(echo "$STABLE"    | jq -r '.published_at // empty')
+          PRERELEASE_DATE=$(echo "$PRERELEASE" | jq -r '.published_at // empty')
+
+          if [ -z "$STABLE_DATE" ] && [ -z "$PRERELEASE_DATE" ]; then
+            echo "No releases with macOS assets found — skipping"
+            echo "version=" >> "$GITHUB_OUTPUT"
+            echo "asset_url=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
 
           if [[ "$PRERELEASE_DATE" > "$STABLE_DATE" ]]; then
             RELEASE="$PRERELEASE"
@@ -43,8 +55,9 @@ jobs:
         id: compare
         run: |
           CURRENT=$(grep '^  version ' Casks/multipass.rb | sed 's/.*"\(.*\)"/\1/')
+          VERSION="${{ steps.release.outputs.version }}"
           echo "current=$CURRENT" >> "$GITHUB_OUTPUT"
-          if [ "$CURRENT" = "${{ steps.release.outputs.version }}" ]; then
+          if [ -z "$VERSION" ] || [ "$CURRENT" = "$VERSION" ]; then
             echo "skip=true" >> "$GITHUB_OUTPUT"
           else
             echo "skip=false" >> "$GITHUB_OUTPUT"
