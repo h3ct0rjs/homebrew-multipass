@@ -19,17 +19,15 @@ brew info h3ct0rjs/multipass/multipass
 
 ## Installing a specific version
 
-Homebrew casks do not support installing arbitrary older versions directly, but you can pin to a specific release by editing the cask locally:
+Homebrew casks do not support version specifiers in the install command — there is no `brew install multipass@1.16.2` equivalent. The cask always installs the single version currently tracked in this tap.
+
+To install a specific version, download the `.pkg` directly from the [Multipass releases page](https://github.com/canonical/multipass/releases) and run it manually:
 
 ```sh
-# 1. Find the cask file
-brew edit h3ct0rjs/multipass/multipass
-
-# 2. Change `version` and `sha256` to the target release, then install
-brew install h3ct0rjs/multipass/multipass
+# Example: install v1.16.2 directly
+curl -LO https://github.com/canonical/multipass/releases/download/v1.16.2/multipass-1.16.2+mac-Darwin.pkg
+sudo installer -pkg multipass-1.16.2+mac-Darwin.pkg -target /
 ```
-
-SHA256 checksums for every release are listed on the [Multipass releases page](https://github.com/canonical/multipass/releases).
 
 ## Staying on stable only
 
