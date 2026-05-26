@@ -1,0 +1,73 @@
+name: Autobump
+
+on:
+  schedule:
+    - cron: '23 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  bump:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check latest Multipass release
+        id: release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RELEASE=$(gh api repos/canonical/multipass/releases --jq '.[0]')
+          VERSION=$(echo "$RELEASE" | jq -r '.tag_name' | sed 's/^v//')
+          ASSET_URL=$(echo "$RELEASE" | jq -r \
+            '.assets[] | select(.name | test("mac-Darwin\\.pkg$")) | .browser_download_url')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "asset_url=$ASSET_URL" >> "$GITHUB_OUTPUT"
+
+      - name: Compare with cask version
+        id: compare
+        run: |
+          CURRENT=$(grep '^  version ' Casks/multipass.rb | sed 's/.*"\(.*\)"/\1/')
+          echo "current=$CURRENT" >> "$GITHUB_OUTPUT"
+          if [ "$CURRENT" = "${{ steps.release.outputs.version }}" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Download and compute SHA256
+        if: steps.compare.outputs.skip == 'false'
+        run: |
+          curl -fL -o /tmp/multipass.pkg "${{ steps.release.outputs.asset_url }}"
+          SHA=$(shasum -a 256 /tmp/multipass.pkg | cut -d' ' -f1)
+          echo "sha256=$SHA" >> "$GITHUB_ENV"
+
+      - name: Update cask
+        if: steps.compare.outputs.skip == 'false'
+        run: |
+          VERSION="${{ steps.release.outputs.version }}"
+          sed -i '' "s/^  version \".*\"/  version \"$VERSION\"/" Casks/multipass.rb
+          sed -i '' "s/^  sha256 \".*\"/  sha256 \"$sha256\"/" Casks/multipass.rb
+
+      - name: Open PR
+        if: steps.compare.outputs.skip == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.release.outputs.version }}"
+          BRANCH="autobump/multipass-${VERSION}"
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add Casks/multipass.rb
+          git commit -m "multipass: update to ${VERSION} [autobump]"
+          git push origin "$BRANCH"
+          gh pr create \
+            --title "multipass ${VERSION}" \
+            --body "Automated version bump from \`${{ steps.compare.outputs.current }}\` to \`${VERSION}\`." \
+            --base main \
+            --head "$BRANCH" \
+            --label autobump 2>/dev/null || true
