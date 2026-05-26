@@ -1,5 +1,7 @@
 # homebrew-multipass
 
+[![Autobump](https://github.com/h3ct0rjs/homebrew-multipass/actions/workflows/autobump.yml/badge.svg)](https://github.com/h3ct0rjs/homebrew-multipass/actions/workflows/autobump.yml)
+
 Homebrew tap for [Multipass](https://github.com/canonical/multipass/) — tracks **all** releases including release candidates.
 
 ## Install
