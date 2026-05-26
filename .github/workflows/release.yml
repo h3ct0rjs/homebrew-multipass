@@ -1,0 +1,50 @@
+name: Release
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+jobs:
+  release:
+    if: github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'autobump')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        env:
+          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+      - name: Extract version
+        id: version
+        run: |
+          VERSION=$(echo "${{ github.event.pull_request.title }}" | sed 's/multipass //')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          if echo "$VERSION" | grep -qE '\-(rc|beta|alpha)[0-9]*'; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          PRERELEASE="${{ steps.version.outputs.prerelease }}"
+
+          FLAGS="--latest"
+          [ "$PRERELEASE" = "true" ] && FLAGS="--prerelease"
+
+          gh release create "v${VERSION}" \
+            --title "multipass ${VERSION}" \
+            --notes "Bumped cask to [Multipass ${VERSION}](https://github.com/canonical/multipass/releases/tag/v${VERSION}).
+
+## Install
+
+\`\`\`sh
+brew tap h3ct0rjs/multipass
+brew install h3ct0rjs/multipass/multipass@${VERSION}
+\`\`\`" \
+            $FLAGS
