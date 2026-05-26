@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'Casks/**'
+
+jobs:
+  audit:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        env:
+          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+      - name: Set up Homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+
+      - name: Overlay PR casks into tap
+        run: |
+          brew tap h3ct0rjs/multipass https://github.com/h3ct0rjs/homebrew-multipass
+          cp Casks/*.rb "$(brew --repository h3ct0rjs/multipass)/Casks/"
+
+      - name: brew style
+        run: brew style --cask h3ct0rjs/multipass
+
+      - name: brew audit
+        run: brew audit --cask h3ct0rjs/multipass
