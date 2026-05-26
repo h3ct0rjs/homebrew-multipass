@@ -101,5 +101,4 @@ jobs:
             --base main \
             --head "$BRANCH" \
             --label autobump \
-            --reviewer h3ct0rjs \
-            --assignee "github-actions[bot]"
+            --reviewer h3ct0rjs
