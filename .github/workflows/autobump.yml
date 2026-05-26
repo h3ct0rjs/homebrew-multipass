@@ -89,6 +89,7 @@ jobs:
           BRANCH="autobump/multipass-${VERSION}"
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git push origin --delete "$BRANCH" 2>/dev/null || true
           git checkout -b "$BRANCH"
           git add Casks/multipass.rb "Casks/multipass@${VERSION}.rb"
           git commit -m "multipass: update to ${VERSION} [autobump]"
