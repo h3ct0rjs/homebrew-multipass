@@ -37,14 +37,18 @@ jobs:
           FLAGS="--latest"
           [ "$PRERELEASE" = "true" ] && FLAGS="--prerelease"
 
+          cat > /tmp/notes.md <<EOF
+          Bumped cask to [Multipass ${VERSION}](https://github.com/canonical/multipass/releases/tag/v${VERSION}).
+
+          ## Install
+
+          \`\`\`sh
+          brew tap h3ct0rjs/multipass
+          brew install h3ct0rjs/multipass/multipass@${VERSION}
+          \`\`\`
+          EOF
+
           gh release create "v${VERSION}" \
             --title "multipass ${VERSION}" \
-            --notes "Bumped cask to [Multipass ${VERSION}](https://github.com/canonical/multipass/releases/tag/v${VERSION}).
-
-## Install
-
-\`\`\`sh
-brew tap h3ct0rjs/multipass
-brew install h3ct0rjs/multipass/multipass@${VERSION}
-\`\`\`" \
+            --notes-file /tmp/notes.md \
             $FLAGS
