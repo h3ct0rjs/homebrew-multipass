@@ -17,11 +17,6 @@ jobs:
       - name: Set up Homebrew
         uses: Homebrew/actions/setup-homebrew@main
 
-      - name: Tap and overlay merged casks
-        run: |
-          brew tap h3ct0rjs/multipass https://github.com/h3ct0rjs/homebrew-multipass
-          cp Casks/*.rb "$(brew --repository h3ct0rjs/multipass)/Casks/"
-
       - name: brew livecheck
         env:
           HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
