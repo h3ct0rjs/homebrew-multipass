@@ -2,6 +2,13 @@ cask "multipass@1.16.3" do
   version "1.16.3"
   sha256 "7d6eab39614139884cfb5a4aeb68f9b25334356c142d5d4b1f74acdd76082c18"
 
+  on_arm do
+    postflight_steps do
+      symlink "/Library/Application Support/com.canonical.multipass/Resources/completions/bash/multipass",
+              "{{HOMEBREW_PREFIX}}/etc/bash_completion.d/multipass", remove_on_uninstall: true
+    end
+  end
+
   url "https://github.com/canonical/multipass/releases/download/v#{version}/multipass-#{version}+mac-Darwin.pkg"
   name "Multipass"
   desc "Orchestrates virtual Ubuntu instances"
@@ -10,13 +17,6 @@ cask "multipass@1.16.3" do
   depends_on macos: :ventura
 
   pkg "multipass-#{version}+mac-Darwin.pkg"
-
-  on_arm do
-    postflight do
-      File.symlink("/Library/Application Support/com.canonical.multipass/Resources/completions/bash/multipass",
-                   "#{HOMEBREW_PREFIX}/etc/bash_completion.d/multipass")
-    end
-  end
 
   uninstall launchctl: "com.canonical.multipassd",
             pkgutil:   "com.canonical.multipass.*",

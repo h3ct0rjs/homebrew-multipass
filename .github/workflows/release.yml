@@ -18,8 +18,10 @@ jobs:
 
       - name: Extract version
         id: version
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
-          VERSION=$(echo "${{ github.event.pull_request.title }}" | sed 's/multipass //')
+          VERSION="${PR_TITLE#multipass }"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           if echo "$VERSION" | grep -qE '\-(rc|beta|alpha)[0-9]*'; then
             echo "prerelease=true" >> "$GITHUB_OUTPUT"
