@@ -17,11 +17,6 @@ jobs:
       - name: Set up Homebrew
         uses: Homebrew/actions/setup-homebrew@main
 
-      - name: Overlay PR casks into tap
-        run: |
-          brew tap h3ct0rjs/multipass https://github.com/h3ct0rjs/homebrew-multipass
-          cp Casks/*.rb "$(brew --repository h3ct0rjs/multipass)/Casks/"
-
       - name: brew style
         run: brew style --cask h3ct0rjs/multipass
 
