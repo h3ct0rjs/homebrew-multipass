@@ -5,12 +5,19 @@ VERSION="$1"
 SHA256="$2"
 OUT="Casks/multipass@${VERSION}.rb"
 
-[ -f "$OUT" ] && exit 0
+[[ -f "${OUT}" ]] && exit 0
 
-cat > "$OUT" << EOF
+cat >"${OUT}" <<EOF
 cask "multipass@${VERSION}" do
   version "${VERSION}"
   sha256 "${SHA256}"
+
+  on_arm do
+    postflight_steps do
+      symlink "/Library/Application Support/com.canonical.multipass/Resources/completions/bash/multipass",
+              "{{HOMEBREW_PREFIX}}/etc/bash_completion.d/multipass", remove_on_uninstall: true
+    end
+  end
 
   url "https://github.com/canonical/multipass/releases/download/v#{version}/multipass-#{version}+mac-Darwin.pkg"
   name "Multipass"
@@ -20,13 +27,6 @@ cask "multipass@${VERSION}" do
   depends_on macos: :ventura
 
   pkg "multipass-#{version}+mac-Darwin.pkg"
-
-  on_arm do
-    postflight do
-      File.symlink("/Library/Application Support/com.canonical.multipass/Resources/completions/bash/multipass",
-                   "#{HOMEBREW_PREFIX}/etc/bash_completion.d/multipass")
-    end
-  end
 
   uninstall launchctl: "com.canonical.multipassd",
             pkgutil:   "com.canonical.multipass.*",
